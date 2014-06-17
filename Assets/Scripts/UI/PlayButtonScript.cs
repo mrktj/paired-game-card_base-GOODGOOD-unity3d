@@ -1,38 +1,58 @@
-﻿using JetBrains.Annotations;
+﻿using System.Linq;
+using JetBrains.Annotations;
 using UnityEngine;
 
-public class PlayButtonScript : MonoBehaviour 
+public class PlayButtonScript : MonoBehaviour
 {
-    [UsedImplicitly]
-	void Awake()
-    {
-        NotificationCenter.DefaultCenter.AddObserver(this, "OnHostListReceived");
-    }
+    public int Port = 8672;
+    public string GameType = "PairedGame_Development";
 
     [UsedImplicitly]
-    void OnClick()
+    private void OnClick()
     {
         Debug.Log("PlayButtonScript OnClick");
 
-        NetworkManager.Instance.RefreshHostList();
+        MasterServer.ClearHostList();
+        MasterServer.RequestHostList(GameType);
     }
 
-    [UsedImplicitly]
-    void OnHostListReceived()
+    private void ConnectToHost()
     {
-        Debug.Log("PlayButtonScript OnHostListReceived");
+        var hostList = MasterServer.PollHostList();
+        var host = hostList.FirstOrDefault(h => h.connectedPlayers < h.playerLimit);
 
-        NetworkManager.Instance.ConnectToGame();
+        Debug.Log("PlayButtonScript ConnectToHost: " + hostList.Length + " games available");
+
+        if (host == null)
+        {
+            Network.InitializeServer(2, Port, !Network.HavePublicAddress());
+            MasterServer.RegisterHost(GameType, "PairedGame");
+        }
+        else
+        {
+            Network.Connect(host);
+        }
     }
 
     [UsedImplicitly]
-    void OnServerInitialized()
+    private void OnMasterServerEvent(MasterServerEvent msEvent)
+    {
+        if (msEvent == MasterServerEvent.HostListReceived)
+        {
+            Debug.Log("PlayButtonScript OnMasterServerEvent: HostListRecieved");
+
+            ConnectToHost();
+        }
+    }
+
+    [UsedImplicitly]
+    private void OnServerInitialized()
     {
         Debug.Log("PlayButtonScript OnServerInitialized");
     }
 
     [UsedImplicitly]
-    void OnPlayerConnected()
+    private void OnPlayerConnected()
     {
         Debug.Log("PlayerButtonScript OnPlayerConnected");
 
@@ -40,7 +60,7 @@ public class PlayButtonScript : MonoBehaviour
     }
 
     [UsedImplicitly]
-    void OnConnectedToServer()
+    private void OnConnectedToServer()
     {
         Debug.Log("PlayButtonScript OnConnectedToServer");
 
