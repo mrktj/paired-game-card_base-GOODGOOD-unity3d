@@ -2,30 +2,13 @@
 using JetBrains.Annotations;
 using UnityEngine;
 
-public class NetworkManager : MonoBehaviour
+public class NetworkManager : Singleton<NetworkManager>
 {
     public static int Port = 8672;
     public static string AppVersion = "0.1";
     public static string GameType = "PairedGameDevelopment_v" + AppVersion;
 
-    [UsedImplicitly]
-    private void Awake()
-    {
-        var networkManager = FindObjectOfType<NetworkManager>();
-
-        if (networkManager != null)
-        {
-            DontDestroyOnLoad(transform.gameObject);
-        }
-        else
-        {
-            Destroy(transform.gameObject);
-
-            Debug.Log("NetworkManager Awake: Destroying network manager");
-        }
-    }
-
-    public static void ConnectToGame()
+    public void ConnectToGame()
     {
         var hostList = MasterServer.PollHostList();
 
@@ -41,16 +24,16 @@ public class NetworkManager : MonoBehaviour
         MasterServer.RegisterHost(GameType, "NetworkedGame", AppVersion);
     }
 
-   public static void RefreshHostList()
+    public void RefreshHostList()
     {
         Debug.Log("NetworkManager RefreshHostList");
 
         MasterServer.ClearHostList();
         MasterServer.RequestHostList(GameType);
     }
-       
+
     [UsedImplicitly]
-    void OnMasterServerEvent(MasterServerEvent msEvent)
+    private void OnMasterServerEvent(MasterServerEvent msEvent)
     {
         if (msEvent == MasterServerEvent.HostListReceived)
         {
@@ -61,7 +44,7 @@ public class NetworkManager : MonoBehaviour
     }
 
     [UsedImplicitly]
-    void OnFailedToConnectToMasterServer(NetworkConnectionError info) 
+    private void OnFailedToConnectToMasterServer(NetworkConnectionError info)
     {
         Debug.Log("Could not connect to master server: " + info);
     }

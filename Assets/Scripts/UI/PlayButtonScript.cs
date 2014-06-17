@@ -14,7 +14,7 @@ public class PlayButtonScript : MonoBehaviour
     {
         Debug.Log("PlayButtonScript OnClick");
 
-        NetworkManager.RefreshHostList();
+        NetworkManager.Instance.RefreshHostList();
     }
 
     [UsedImplicitly]
@@ -22,7 +22,7 @@ public class PlayButtonScript : MonoBehaviour
     {
         Debug.Log("PlayButtonScript OnHostListReceived");
 
-        NetworkManager.ConnectToGame();
+        NetworkManager.Instance.ConnectToGame();
     }
 
     [UsedImplicitly]
