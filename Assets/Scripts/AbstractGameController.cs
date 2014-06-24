@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
+using System.Linq;
 using Assets.Scripts;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -40,7 +40,7 @@ public abstract class AbstractGameController : MonoBehaviour
 
         _count = ScreenManager.Rows*ScreenManager.Cols;
 
-        MatchedAnswers = new double[_count];
+        MatchedAnswers = new double[_count/2];
     }
 
     protected virtual void Initialize()
@@ -61,6 +61,11 @@ public abstract class AbstractGameController : MonoBehaviour
             Debug.Log("AbstractGameController CheckSelectedCards: True");
 
             HandleCardMatch(answer);
+
+            if (MatchedAnswers.All(value => value > 0))
+            {
+                HandleGameOver();
+            }
         }
         else
         {
@@ -103,7 +108,6 @@ public abstract class AbstractGameController : MonoBehaviour
         two.QueueFlip();
     }
 
-    protected abstract void HandleCardMatch(int answer);
 
     protected void GenerateAnswerKey()
     {
@@ -150,4 +154,6 @@ public abstract class AbstractGameController : MonoBehaviour
     }
 
     protected abstract GameObject InstantiateCard();
+    protected abstract void HandleCardMatch(int answer);
+    protected abstract void HandleGameOver();
 }

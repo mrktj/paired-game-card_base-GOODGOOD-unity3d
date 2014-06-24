@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using JetBrains.Annotations;
 using UnityEngine;
 
 public class NetworkedGameController : AbstractGameController
 {
-    private int _lastCorrectAnswer;
-
     [UsedImplicitly]
     private new void Start()
     {
@@ -49,6 +45,23 @@ public class NetworkedGameController : AbstractGameController
         MatchedAnswers[answer] = Network.time;
 
         networkView.RPC("HandleOpponentCardMatch", RPCMode.Others, answer);
+    }
+
+    protected override void HandleGameOver()
+    {
+        Debug.Log("NetworkedGameController HandleGameOver");
+
+        NotificationCenter.DefaultCenter.PostNotification(this, "GameOver");
+
+        networkView.RPC("HandleOpponentGameOver", RPCMode.Others);
+    }
+
+    [RPC, UsedImplicitly]
+    private void HandleOpponentGameOver(NetworkMessageInfo info)
+    {
+        Debug.Log("NetworkedGameController HandleOpponentGameOver");
+
+        NotificationCenter.DefaultCenter.PostNotification(this, "GameOver");
     }
 
     [RPC, UsedImplicitly]

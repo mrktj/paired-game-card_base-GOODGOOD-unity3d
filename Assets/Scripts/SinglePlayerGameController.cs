@@ -28,6 +28,13 @@ public class SinglePlayerGameController : AbstractGameController
         MatchedAnswers[answer] = DateTime.Now.Millisecond;
     }
 
+    protected override void HandleGameOver()
+    {
+        Debug.Log("SinglePlayerGameController HandleGameOver");
+
+        NotificationCenter.DefaultCenter.PostNotification(this, "GameOver");
+    }
+
     protected override GameObject InstantiateCard()
     {
         Debug.Log("SinglePlayerGameController InstantiateCard");
