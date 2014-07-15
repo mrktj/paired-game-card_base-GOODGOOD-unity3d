@@ -45,7 +45,7 @@ public class CardController : MonoBehaviour
 
         Answer = GameController.AnswerKey[Id];
 
-        NotificationCenter.DefaultCenter.PostNotification(this, "OnCardInitialized");
+//        NotificationCenter.DefaultCenter.PostNotification(this, "OnCardInitialized");
     }
 
     [UsedImplicitly]
