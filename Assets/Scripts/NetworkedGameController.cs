@@ -21,6 +21,16 @@ public class NetworkedGameController : AbstractGameController
         }
     }
 
+    protected override void Initialize()
+    {
+        base.Initialize();
+
+        Debug.Log("NetworkedPlayerGameController Initialize");
+
+        OpponentGrid.Reposition();
+    }
+
+
     protected override GameObject InstantiateCard()
     {
         Debug.Log("NetworkedGameController InstantiateCard");
