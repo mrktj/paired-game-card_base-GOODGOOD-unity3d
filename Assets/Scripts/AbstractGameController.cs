@@ -6,8 +6,12 @@ using UnityEngine;
 
 public abstract class AbstractGameController : MonoBehaviour
 {
+    public static int Cols = 4;
+    public static int Rows = 3;
+
     public GameObject Prefab;
-    public GameObject PlayerGrid, OpponentGrid;
+    public CardGridController PlayerGrid;
+    public CardGridController OpponentGrid;
     public UIAtlas CardSetAtlas;
 
     private int _count;
@@ -39,7 +43,7 @@ public abstract class AbstractGameController : MonoBehaviour
     {
         Debug.Log("AbstractGameController Start");
 
-        _count = ScreenManager.Rows*ScreenManager.Cols;
+        _count = Cols * Rows;
 
         MatchedAnswers = new double[_count/2];
     }
@@ -145,39 +149,19 @@ public abstract class AbstractGameController : MonoBehaviour
     private void GenerateCards(bool forPlayer)
     {
         var grid = forPlayer ? PlayerGrid : OpponentGrid;
-        var panel = grid.transform.parent;
-
-        var grdw = panel.GetComponent<UIPanel>().width;
-        var grdh = panel.GetComponent<UIPanel>().height;
-
-        var wpad = grdw * 0.02;
-        var hpad = grdh * 0.02;
-
-        wpad = wpad * 2 * (ScreenManager.Cols - 1);
-        hpad = hpad * 2 * (ScreenManager.Rows - 1);
-
-
-        var cardw = (grdw - wpad) / ScreenManager.Cols;
-        var cardh = (grdh - hpad) / ScreenManager.Rows;
 
         for (var i = 0; i < _count; i++)
         {
             var card = InstantiateCard();
             var controller = card.GetComponent<CardController>();
 
-            card.GetComponent<UISprite>().width = (int) cardw;
-            card.GetComponent<UISprite>().height = (int) cardh;
-
             controller.Player = forPlayer;
             controller.Id = i;
 
-            Utils.AddChild(grid, card);
+            grid.AddCard(card);
         }
 
-        grid.GetComponent<UIGrid>().cellWidth = (int) ((grdw / ScreenManager.Cols) * 1.04);
-        grid.GetComponent<UIGrid>().cellHeight = (int) ((grdh / ScreenManager.Rows) * 1.04);
-
-        grid.GetComponent<UIGrid>().Reposition();
+        grid.Reposition();
     }
 
     protected abstract GameObject InstantiateCard();
