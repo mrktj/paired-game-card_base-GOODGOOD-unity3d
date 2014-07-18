@@ -28,4 +28,14 @@ public class NetworkedCardController : CardController
         
         networkView.RPC("QueueFlip", RPCMode.Others);
     }
+
+    [UsedImplicitly]
+    private void OnNetworkInstantiate(NetworkMessageInfo info)
+    {
+        if (!networkView.isMine)
+        {
+            var opponentGrid = GameObject.FindGameObjectWithTag("OpponentGrid");
+            opponentGrid.GetComponent<CardGridController>().AddCard(gameObject);
+        }
+    }
 }
