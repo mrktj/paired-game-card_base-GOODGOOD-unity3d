@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Linq;
 using Assets.Scripts;
 using JetBrains.Annotations;
@@ -14,15 +15,28 @@ public abstract class AbstractGameController : MonoBehaviour
     public CardGridController OpponentGrid;
     public UIAtlas CardSetAtlas;
 
-    private int _count;
+    protected int Count;
     protected double[] MatchedAnswers;
 
     private CardController _selectedCardOne;
     private CardController _selectedCardTwo;
 
 
+    /// <summary>
+    /// Store for the AnswerKey property
+    /// </summary>
     private int[] _answerKey;
-    public int[] AnswerKey
+
+    /// <summary>
+    /// AnswerKey property 
+    /// </summary>
+    /// <value>
+    /// Holds the game's answer key. It is either generated or received
+    /// from a peer that is acting as a server. The game is considered 
+    /// ready to initialze at this point to ensure that the client and
+    /// server are in sync.
+    /// </value>
+    public virtual int[] AnswerKey
     {
         protected set
         {
@@ -43,11 +57,15 @@ public abstract class AbstractGameController : MonoBehaviour
     {
         Debug.Log("AbstractGameController Start");
 
-        _count = Cols * Rows;
+        Count = Cols * Rows;
 
-        MatchedAnswers = new double[_count/2];
+        MatchedAnswers = new double[Count/2];
     }
 
+    /// <summary>
+    /// Initialize is called when the answer key has been generated or 
+    /// received from the peer. It is responsible for generating the cards.
+    /// </summary>
     protected virtual void Initialize()
     {
         Debug.Log("AbstractGameController Initialize");
@@ -55,11 +73,23 @@ public abstract class AbstractGameController : MonoBehaviour
         GeneratePlayerCards();
     }
 
+    protected void GameReady()
+    {
+        StartCoroutine(PlayerGrid.QueueReposition(() => StartCoroutine(OpponentGrid.QueueReposition(() =>
+        {
+            PlayerGrid.transform.parent.GetComponent<UIPanel>().alpha = 1;
+            OpponentGrid.transform.parent.GetComponent<UIPanel>().alpha = 1;
+
+            Debug.Log("AbstractGameController GameReady: " + DateTime.Now);
+        }))));
+    }
+
     private void CheckSelectedCards()
     {
         if (_selectedCardOne == null || _selectedCardTwo == null) return;
 
         var answer = AnswerKey[_selectedCardOne.Id];
+        
 
         if (answer == AnswerKey[_selectedCardTwo.Id])
         {
@@ -118,9 +148,9 @@ public abstract class AbstractGameController : MonoBehaviour
     {
         Debug.Log("AbstractGameController GenerateAnswerKey");
 
-        int[] answerKey = new int[_count];
+        int[] answerKey = new int[Count];
 
-        for (int i = 0, j = _count/2; i < _count/2; i++, j++)
+        for (int i = 0, j = Count/2; i < Count/2; i++, j++)
         {
             answerKey[i] = i;
             answerKey[j] = i;
@@ -139,7 +169,7 @@ public abstract class AbstractGameController : MonoBehaviour
         GenerateCards(true);
     }
 
-    protected void GenerateOpponentCards()
+    protected virtual void GenerateOpponentCards()
     {
         Debug.Log("AbstractGameController GenerateOpponentCards");
 
@@ -150,7 +180,7 @@ public abstract class AbstractGameController : MonoBehaviour
     {
         var grid = forPlayer ? PlayerGrid : OpponentGrid;
 
-        for (var i = 0; i < _count; i++)
+        for (var i = 0; i < Count; i++)
         {
             var card = InstantiateCard();
             var controller = card.GetComponent<CardController>();
@@ -160,8 +190,6 @@ public abstract class AbstractGameController : MonoBehaviour
 
             grid.AddCard(card);
         }
-
-        grid.Reposition();
     }
 
     protected abstract GameObject InstantiateCard();

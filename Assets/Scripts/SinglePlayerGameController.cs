@@ -19,8 +19,13 @@ public class SinglePlayerGameController : AbstractGameController
         Debug.Log("SinglePlayerGameController Initialize");
 
         GenerateOpponentCards();
+    }
 
-        // TODO: Resize logic
+    protected override void GenerateOpponentCards()
+    {
+        base.GenerateOpponentCards();
+
+        GameReady();
     }
 
     protected override void HandleCardMatch(int answer)

@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using Assets.Scripts;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -7,7 +9,7 @@ public class CardGridController : MonoBehaviour
 {
     private List<GameObject> _cardList;
     private UIPanel _panel;
-    private float _lastWidth, _lastHeight;
+    private float _width, _height;
     
     [UsedImplicitly]
     private void Awake ()
@@ -17,26 +19,8 @@ public class CardGridController : MonoBehaviour
         _cardList = new List<GameObject>();
         _panel = transform.parent.GetComponent<UIPanel>();
 
-        _lastWidth = _panel.width;
-        _lastHeight = _panel.height;
-
-        StartCoroutine(ResizeCheck());
-    }
-
-    IEnumerator ResizeCheck()
-    {
-        while (true)
-        {
-            if (_lastWidth != _panel.width || _lastHeight != _panel.height)
-            {
-                _lastWidth = _panel.width;
-                _lastHeight = _panel.height;
-                
-                Reposition();
-            }
-
-            yield return new WaitForSeconds(0.3f);
-        }
+        _width = _panel.width;
+        _height = _panel.height;
     }
 
     public void AddCard(GameObject card)
@@ -57,6 +41,35 @@ public class CardGridController : MonoBehaviour
         card.layer = transform.gameObject.layer;
 
         _cardList.Add(card);
+    }
+
+    public IEnumerator QueueReposition(Action callback)
+    {
+        Debug.Log("CardGridController QueueReposition");
+
+        var hasRepositioned = false;
+//        var elapsed = Time.time;
+
+        while (!hasRepositioned)
+     
+        {
+            if (!Utils.NearlyEqual(_width, _panel.width, float.Epsilon) ||
+                !Utils.NearlyEqual(_height, _panel.height, float.Epsilon))
+            {
+                Reposition();
+
+                hasRepositioned = true;
+                continue;
+            }
+
+//            elapsed += Time.deltaTime;
+
+            yield return new WaitForSeconds(0.3f);
+        }
+
+        callback();
+
+        yield return null;
     }
 
     [UsedImplicitly]
@@ -83,7 +96,7 @@ public class CardGridController : MonoBehaviour
         }
 
         GetComponent<UIGrid>().cellWidth = (int) ((grdw / AbstractGameController.Cols) * 1.02);
-        GetComponent<UIGrid>().cellHeight = (int) ((grdh / AbstractGameController.Rows) * 1.02);
+        GetComponent<UIGrid>().cellHeight = (int) ((grdh / AbstractGameController.Rows) * 1);
 
         GetComponent<UIGrid>().Reposition();
     }

@@ -4,6 +4,22 @@ using UnityEngine;
 
 public class NetworkedGameController : AbstractGameController
 {
+    public override int[] AnswerKey
+    {
+        protected set
+        {
+            Debug.Log("NetworkedGameController AnswerKey set");
+
+            if (Network.isServer)
+            {
+                networkView.RPC("SetAnswerKey", RPCMode.Others, value);
+            }
+
+            base.AnswerKey = value;
+        }
+        get { return base.AnswerKey; }
+    }
+
     [UsedImplicitly]
     private new void Start()
     {
@@ -26,10 +42,18 @@ public class NetworkedGameController : AbstractGameController
         base.Initialize();
 
         Debug.Log("NetworkedPlayerGameController Initialize");
-
-        OpponentGrid.Reposition();
     }
 
+    [UsedImplicitly]
+    public void NetworkedCardInitialized(int id)
+    {
+        Debug.Log("NetworkedGameController NetworkedCardInitialized: " + id);
+
+        if (id == Count - 1)
+        {
+            GameReady();
+        }
+    }
 
     protected override GameObject InstantiateCard()
     {
@@ -95,13 +119,6 @@ public class NetworkedGameController : AbstractGameController
     private void HandlePlayerScoredFirst()
     {
         Debug.Log("NetworkGameController HandlePlayerScoredFirst");
-    }
-
-    protected new void GenerateAnswerKey()
-    {
-        base.GenerateAnswerKey();
-
-        networkView.RPC("SetAnswerKey", RPCMode.Others, AnswerKey);
     }
 
     [RPC]

@@ -18,6 +18,16 @@ public class NetworkedCardController : CardController
         }
     }
 
+    protected override void Initialize()
+    {
+        base.Initialize();
+
+        if (!networkView.isMine)
+        {
+            ((NetworkedGameController) GameController).NetworkedCardInitialized(Id);
+        }
+    }
+
     [UsedImplicitly]
     protected new void OnClick()
     {

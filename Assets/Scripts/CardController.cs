@@ -31,21 +31,21 @@ public class CardController : MonoBehaviour
     }
 
     [UsedImplicitly]
-    private void Start()
+    private void Awake()
     {
-        Debug.Log("CardController (" + Id + ") Start");
+        Debug.Log("CardController Awake");
 
         _defaultCardAtlas = GetComponent<UISprite>().atlas;
     }
 
     [UsedImplicitly]
-    protected void Initialize()
+    protected virtual void Initialize()
     {
+        Debug.Log("CardController (" + Id + ") Initialize");
+        
         GameController = FindObjectOfType<AbstractGameController>();
 
         Answer = GameController.AnswerKey[Id];
-
-//        NotificationCenter.DefaultCenter.PostNotification(this, "OnCardInitialized");
     }
 
     [UsedImplicitly]
