@@ -8,7 +8,7 @@ using UnityEngine;
 public class CardGridController : MonoBehaviour
 {
     private List<GameObject> _cardList;
-    private UIPanel _panel;
+    public UIPanel Panel;
     private float _width, _height;
     
     [UsedImplicitly]
@@ -17,10 +17,10 @@ public class CardGridController : MonoBehaviour
         Debug.Log("CardGridController Awake");
 
         _cardList = new List<GameObject>();
-        _panel = transform.parent.GetComponent<UIPanel>();
+        Panel = transform.parent.GetComponent<UIPanel>();
 
-        _width = _panel.width;
-        _height = _panel.height;
+        _width = Panel.width;
+        _height = Panel.height;
     }
 
     public void AddCard(GameObject card)
@@ -47,25 +47,10 @@ public class CardGridController : MonoBehaviour
     {
         Debug.Log("CardGridController QueueReposition");
 
-        var hasRepositioned = false;
-//        var elapsed = Time.time;
+        // Wait for NGUI to resize the panel
+        yield return new WaitForSeconds(0.3f);
 
-        while (!hasRepositioned)
-     
-        {
-            if (!Utils.NearlyEqual(_width, _panel.width, float.Epsilon) ||
-                !Utils.NearlyEqual(_height, _panel.height, float.Epsilon))
-            {
-                Reposition();
-
-                hasRepositioned = true;
-                continue;
-            }
-
-//            elapsed += Time.deltaTime;
-
-            yield return new WaitForSeconds(0.3f);
-        }
+        Reposition();
 
         callback();
 
@@ -77,8 +62,8 @@ public class CardGridController : MonoBehaviour
     {
         Debug.Log("CardGridController RepositionCards");
 
-        var grdw = _panel.width;
-        var grdh = _panel.height;
+        var grdw = Panel.width;
+        var grdh = Panel.height;
 
         var wpad = grdw * 0.01;
         var hpad = grdh * 0.01;

@@ -22,10 +22,7 @@ public class NetworkedCardController : CardController
     {
         base.Initialize();
 
-        if (!networkView.isMine)
-        {
-            ((NetworkedGameController) GameController).NetworkedCardInitialized(Id);
-        }
+        ((NetworkedGameController) GameController).NetworkedCardInitialized(this);
     }
 
     [UsedImplicitly]
@@ -37,15 +34,5 @@ public class NetworkedCardController : CardController
         if (Flipping || FaceUp) return;
         
         networkView.RPC("QueueFlip", RPCMode.Others);
-    }
-
-    [UsedImplicitly]
-    private void OnNetworkInstantiate(NetworkMessageInfo info)
-    {
-        if (!networkView.isMine)
-        {
-            var opponentGrid = GameObject.FindGameObjectWithTag("OpponentGrid");
-            opponentGrid.GetComponent<CardGridController>().AddCard(gameObject);
-        }
     }
 }

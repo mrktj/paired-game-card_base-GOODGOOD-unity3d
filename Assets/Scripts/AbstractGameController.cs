@@ -73,15 +73,15 @@ public abstract class AbstractGameController : MonoBehaviour
         GeneratePlayerCards();
     }
 
-    protected void GameReady()
+    /// <summary>
+    /// AfterInitialize should be called by the subclass when it is
+    /// finished doing any extra initialization.
+    /// </summary>
+    protected void AfterInitialize()
     {
-        StartCoroutine(PlayerGrid.QueueReposition(() => StartCoroutine(OpponentGrid.QueueReposition(() =>
-        {
-            PlayerGrid.transform.parent.GetComponent<UIPanel>().alpha = 1;
-            OpponentGrid.transform.parent.GetComponent<UIPanel>().alpha = 1;
+        Debug.Log("AbstractGameController AfterInitialize");
 
-            Debug.Log("AbstractGameController GameReady: " + DateTime.Now);
-        }))));
+        StartCoroutine(PlayerGrid.QueueReposition(BeforeGameStart));
     }
 
     private void CheckSelectedCards()
@@ -193,6 +193,7 @@ public abstract class AbstractGameController : MonoBehaviour
     }
 
     protected abstract GameObject InstantiateCard();
+    protected abstract void BeforeGameStart();
     protected abstract void HandleCardMatch(int answer);
     protected abstract void HandleGameOver();
 }

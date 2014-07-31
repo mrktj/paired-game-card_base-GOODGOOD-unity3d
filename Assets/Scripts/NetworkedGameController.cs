@@ -1,9 +1,13 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using UnityEngine;
 
 public class NetworkedGameController : AbstractGameController
 {
+    private bool _initializationComplete;
+
     public override int[] AnswerKey
     {
         protected set
@@ -44,14 +48,80 @@ public class NetworkedGameController : AbstractGameController
         Debug.Log("NetworkedPlayerGameController Initialize");
     }
 
-    [UsedImplicitly]
-    public void NetworkedCardInitialized(int id)
+    protected override void BeforeGameStart()
     {
-        Debug.Log("NetworkedGameController NetworkedCardInitialized: " + id);
+        Debug.Log("NetworkedPlayerGameController BeforeGameStart");
 
-        if (id == Count - 1)
+        StartCoroutine(OpponentGrid.QueueReposition(() =>
         {
-            GameReady();
+            PlayerGrid.Panel.alpha = 1;
+            OpponentGrid.Panel.alpha = 1;
+
+            // At this point Initialization is complete meaning that the AnswerKey, 
+            // Player cards, and Opponent cards have all been created and synchronized
+            _initializationComplete = true;
+
+            if (Network.isServer)
+            {
+                networkView.RPC("GetSynchronizedStartTime", RPCMode.Others);
+            }
+        }));
+    }
+
+    [RPC, UsedImplicitly]
+    private void GetSynchronizedStartTime()
+    {
+        Debug.Log("NetworkedGameController GetSynchronizedStartTime");
+
+        StartCoroutine(GetSynchronizedStartTimeCoroutine());
+    }
+
+    private IEnumerator GetSynchronizedStartTimeCoroutine()
+    {
+        while (!_initializationComplete)
+        {
+            Debug.Log(_initializationComplete);
+            
+            yield return new WaitForSeconds(0.3f);
+        }
+
+        var startTime = (float) Network.time + Network.GetAveragePing(Network.player)*2;
+
+        BeginGameAtTime(startTime);
+        networkView.RPC("BeginGameAtTime", RPCMode.Others, startTime);
+    }
+
+    [RPC]
+    private void BeginGameAtTime(float startTime)
+    {
+        Debug.Log("NetworkedGameController BeginGameAtTime");
+
+        StartCoroutine(BeginGameAtTimeCoroutine(startTime));
+    }
+
+    private IEnumerator BeginGameAtTimeCoroutine(float startTime)
+    {
+        while (Network.time < startTime)
+        {
+            yield return new WaitForSeconds(0.0001f);
+        }
+        
+        Debug.Log("NetworkedGameController BeginGameTime: Game Ready at " + Network.time + " (" + DateTime.Now + ")");
+    }
+
+    [UsedImplicitly]
+    public void NetworkedCardInitialized(CardController card)
+    {
+        Debug.Log("NetworkedGameController NetworkedCardInitialized: " + card.Id);
+
+        if (!card.networkView.isMine)
+        {
+            OpponentGrid.AddCard(card.gameObject);
+
+            if (card.Id == Count - 1)
+            {
+                AfterInitialize();
+            }
         }
     }
 

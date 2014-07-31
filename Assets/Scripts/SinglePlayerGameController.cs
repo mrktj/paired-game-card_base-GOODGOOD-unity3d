@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 using UnityEngine;
 
 public class SinglePlayerGameController : AbstractGameController
@@ -21,11 +22,23 @@ public class SinglePlayerGameController : AbstractGameController
         GenerateOpponentCards();
     }
 
+    protected override void BeforeGameStart()
+    {
+        Debug.Log("SinglePlayerGameController BeforeGameStart");
+
+        StartCoroutine(OpponentGrid.QueueReposition(() =>
+        {
+            PlayerGrid.Panel.alpha = 1;
+            OpponentGrid.Panel.alpha = 1;
+        }));
+    }
+
+
     protected override void GenerateOpponentCards()
     {
         base.GenerateOpponentCards();
 
-        GameReady();
+        AfterInitialize();
     }
 
     protected override void HandleCardMatch(int answer)
