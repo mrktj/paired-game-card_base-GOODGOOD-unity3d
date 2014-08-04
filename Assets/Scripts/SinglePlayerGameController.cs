@@ -2,7 +2,7 @@
 using JetBrains.Annotations;
 using UnityEngine;
 
-public class SinglePlayerGameController : AbstractGameController
+public class SinglePlayerGameController : AbstractGame
 {
     protected new void Start()
     {

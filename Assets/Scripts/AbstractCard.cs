@@ -1,88 +1,60 @@
 ﻿using System.Collections;
+using System.ComponentModel;
 using JetBrains.Annotations;
 using UnityEngine;
 
-public class CardController : MonoBehaviour
+public abstract class AbstractCard : MonoBehaviour
 {
-    private UIAtlas _defaultCardAtlas;
+    public UIAtlas FaceAtlas, BackAtlas;
 
+    public int Answer;
     public bool Player;
-    public AbstractGameController GameController;
 
-    public bool FaceUp { get; private set; }
-    public int Answer { get; private set; }
+    public bool FaceUp;
 
-    protected bool Flipping;
+    private bool _flipping;
     private int _flipQueue;
 
+    #region Initialization
+
     private int _id = -1;
-    public int Id
-    { 
+
+    public int Id {
         set
         {
-            if (_id < 0)
+            if (_id == -1)
             {
-                _id = value; 
-
+                Id = value;
                 Initialize();
             }
         }
         get { return _id; }
     }
 
-    [UsedImplicitly]
-    private void Awake()
-    {
-        Debug.Log("CardController Awake");
+    protected abstract void Initialize();
 
-        _defaultCardAtlas = GetComponent<UISprite>().atlas;
-    }
+    #endregion
 
-    [UsedImplicitly]
-    protected virtual void Initialize()
-    {
-        Debug.Log("CardController (" + Id + ") Initialize");
-        
-        GameController = FindObjectOfType<AbstractGameController>();
-
-        Answer = GameController.AnswerKey[Id];
-    }
+    #region Game Logic
 
     [UsedImplicitly]
     private void Update()
     {
-        if (_flipQueue > 0 && !Flipping)
+        if (_flipQueue > 0 && !_flipping)
         {
             StartCoroutine(Flip());
         }
     }
 
-    [UsedImplicitly]
-    protected void OnClick()
-    {
-        Debug.Log("CardController (" + Id + ") OnClick");
-
-        if (!Player) return;
-        if (Flipping || FaceUp) return;
-
-        GameController.SelectCard(this);
-
-        QueueFlip();
-    }
-
     [RPC]
     public void QueueFlip()
     {
-        Debug.Log("CardController (" + Id + ") QueueFlip");
-
         _flipQueue++;
     }
 
     private IEnumerator Flip()
     {
-        Debug.Log("CardController (" + Id + ") Flip");
-
-        Flipping = true;
+        _flipping = true;
 
         var config = new GoTweenConfig().eulerAngles(new Vector3(0, 180), true);
         config.easeType = GoEaseType.CubicOut;
@@ -97,18 +69,16 @@ public class CardController : MonoBehaviour
         {
             if (!changed && transform.rotation.eulerAngles.y - y > 90)
             {
-                Debug.Log("CardController (" + Id + ") Flip: Change sprite to " + (FaceUp ? "Back" : "Face"));
-
                 var sprite = GetComponent<UISprite>();
 
                 if (FaceUp)
                 {
-                    sprite.atlas = _defaultCardAtlas;
+                    sprite.atlas = BackAtlas;
                     sprite.spriteName = sprite.atlas.GetListOfSprites()[0];
                 }
                 else
                 {
-                    sprite.atlas = GameController.CardSetAtlas;
+                    sprite.atlas = FaceAtlas;
                     sprite.spriteName = sprite.atlas.GetListOfSprites()[Answer];
                     sprite.flip = UISprite.Flip.Horizontally;
                 }
@@ -120,9 +90,9 @@ public class CardController : MonoBehaviour
         }
 
         FaceUp = !FaceUp;
-        Flipping = false;
+        _flipping = false;
         _flipQueue--;
-
-        Debug.Log("CardController (" + Id + ") Done Flipping: Face " + (FaceUp ? "Up" : "Down"));
     }
+
+    #endregion
 }

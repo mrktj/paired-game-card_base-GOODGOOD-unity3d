@@ -1,105 +1,93 @@
 ﻿using System;
 using System.Collections;
-using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using UnityEngine;
 
-public class NetworkedGameController : AbstractGameController
+public class NetworkGame : AbstractGame
 {
+    public CardGridController OpponentGrid;
+
+    #region Initialization
+
     private bool _initializationComplete;
 
     public override int[] AnswerKey
     {
         protected set
         {
-            Debug.Log("NetworkedGameController AnswerKey set");
-
             if (Network.isServer)
             {
                 networkView.RPC("SetAnswerKey", RPCMode.Others, value);
             }
-
             base.AnswerKey = value;
         }
-        get { return base.AnswerKey; }
+    }
+
+    [RPC, UsedImplicitly]
+    protected void SetAnswerKey(int[] answerKey)
+    {
+        AnswerKey = answerKey;
     }
 
     [UsedImplicitly]
-    private new void Start()
+    protected override void Start()
     {
         base.Start();
 
         if (Network.isServer)
         {
-            Debug.Log("NetworkedGameController Start: Generating Answer Key");
-
             GenerateAnswerKey();
         }
-        else
+    }
+
+    [UsedImplicitly]
+    public void OnNetworkedCardInitialized(AbstractCard card)
+    {
+        if (!card.networkView.isMine && card.Id == Count - 1)
         {
-            Debug.Log("NetworkedGameController Start: Waiting for Answer Key...");
+            AfterInitialize();
         }
     }
-
-    protected override void Initialize()
+    
+    protected override void BeforeGameReady()
     {
-        base.Initialize();
-
-        Debug.Log("NetworkedPlayerGameController Initialize");
-    }
-
-    protected override void BeforeGameStart()
-    {
-        Debug.Log("NetworkedPlayerGameController BeforeGameStart");
-
         StartCoroutine(OpponentGrid.QueueReposition(() =>
         {
-            PlayerGrid.Panel.alpha = 1;
-            OpponentGrid.Panel.alpha = 1;
-
-            // At this point Initialization is complete meaning that the AnswerKey, 
-            // Player cards, and Opponent cards have all been created and synchronized
             _initializationComplete = true;
 
             if (Network.isServer)
             {
-                networkView.RPC("GetSynchronizedStartTime", RPCMode.Others);
+                networkView.RPC("GetStartTime", RPCMode.Others);
             }
         }));
     }
 
     [RPC, UsedImplicitly]
-    private void GetSynchronizedStartTime()
+    private void GetStartTime()
     {
-        Debug.Log("NetworkedGameController GetSynchronizedStartTime");
-
-        StartCoroutine(GetSynchronizedStartTimeCoroutine());
+        StartCoroutine(GetStartTimeCoroutine());
     }
 
-    private IEnumerator GetSynchronizedStartTimeCoroutine()
+    private IEnumerator GetStartTimeCoroutine()
     {
         while (!_initializationComplete)
         {
-            Debug.Log(_initializationComplete);
-            
             yield return new WaitForSeconds(0.3f);
         }
 
         var startTime = (float) Network.time + Network.GetAveragePing(Network.player)*2;
 
-        BeginGameAtTime(startTime);
-        networkView.RPC("BeginGameAtTime", RPCMode.Others, startTime);
+        GameReady(startTime);
+        networkView.RPC("GameReady", RPCMode.Others, startTime);
     }
 
     [RPC]
-    private void BeginGameAtTime(float startTime)
+    private void GameReady(float startTime)
     {
-        Debug.Log("NetworkedGameController BeginGameAtTime");
-
-        StartCoroutine(BeginGameAtTimeCoroutine(startTime));
+        StartCoroutine(GameReadyCoroutine(startTime));
     }
 
-    private IEnumerator BeginGameAtTimeCoroutine(float startTime)
+    private IEnumerator GameReadyCoroutine(float startTime)
     {
         while (Network.time < startTime)
         {
@@ -109,30 +97,18 @@ public class NetworkedGameController : AbstractGameController
         Debug.Log("NetworkedGameController BeginGameTime: Game Ready at " + Network.time + " (" + DateTime.Now + ")");
     }
 
-    [UsedImplicitly]
-    public void NetworkedCardInitialized(CardController card)
-    {
-        Debug.Log("NetworkedGameController NetworkedCardInitialized: " + card.Id);
-
-        if (!card.networkView.isMine)
-        {
-            OpponentGrid.AddCard(card.gameObject);
-
-            if (card.Id == Count - 1)
-            {
-                AfterInitialize();
-            }
-        }
-    }
 
     protected override GameObject InstantiateCard()
     {
-        Debug.Log("NetworkedGameController InstantiateCard");
-        
         return Network.Instantiate(Prefab, Prefab.transform.position, Prefab.transform.rotation, 0) as GameObject;
     }
 
-    protected override IEnumerator DeselectCards(CardController one, CardController two)
+
+    #endregion
+
+    #region Game Logic
+
+    protected new IEnumerator DeselectCards(AbstractCard one, AbstractCard two)
     {
         yield return StartCoroutine(base.DeselectCards(one, two));
 
@@ -191,13 +167,9 @@ public class NetworkedGameController : AbstractGameController
         Debug.Log("NetworkGameController HandlePlayerScoredFirst");
     }
 
-    [RPC]
-    protected void SetAnswerKey(int[] answerKey)
-    {
-        Debug.Log("NetworkedGameController SetAnswerKey");
+    #endregion
 
-        AnswerKey = answerKey;
-    }
+    #region Network Logic
 
     [UsedImplicitly]
     private void OnPlayerDisconnected(NetworkPlayer player)
@@ -215,4 +187,6 @@ public class NetworkedGameController : AbstractGameController
 
         Application.LoadLevel("MenuScene");
     }
+
+    #endregion
 }

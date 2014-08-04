@@ -68,11 +68,11 @@ public class CardGridController : MonoBehaviour
         var wpad = grdw * 0.01;
         var hpad = grdh * 0.01;
 
-        wpad = wpad * 2 * (AbstractGameController.Cols - 1);
-        hpad = hpad * 2 * (AbstractGameController.Rows - 1);
+        wpad = wpad * 2 * (AbstractGame.Cols - 1);
+        hpad = hpad * 2 * (AbstractGame.Rows - 1);
 
-        var cardw = (grdw - wpad) / AbstractGameController.Cols;
-        var cardh = (grdh - hpad) / AbstractGameController.Rows;
+        var cardw = (grdw - wpad) / AbstractGame.Cols;
+        var cardh = (grdh - hpad) / AbstractGame.Rows;
 
         foreach (var c in _cardList)
         {
@@ -80,8 +80,8 @@ public class CardGridController : MonoBehaviour
             c.GetComponent<UISprite>().height = (int) cardh;
         }
 
-        GetComponent<UIGrid>().cellWidth = (int) ((grdw / AbstractGameController.Cols) * 1.02);
-        GetComponent<UIGrid>().cellHeight = (int) ((grdh / AbstractGameController.Rows) * 1);
+        GetComponent<UIGrid>().cellWidth = (int) ((grdw / AbstractGame.Cols) * 1.02);
+        GetComponent<UIGrid>().cellHeight = (int) ((grdh / AbstractGame.Rows) * 1);
 
         GetComponent<UIGrid>().Reposition();
     }
